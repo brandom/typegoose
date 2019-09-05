@@ -120,8 +120,8 @@ export function buildSchema<T, U extends NoParamConstructor<T>>(cl: U) {
     throw new NoValidClass(cl);
   }
 
-  if (buildSchemas.get(cl.name)) {
-    return buildSchemas.get(cl.name);
+  if (buildSchemas.get(getName(cl))) {
+    return buildSchemas.get(getName(cl));
   }
   let sch: mongoose.Schema<U>;
   /** Parent Constructor */
@@ -131,6 +131,7 @@ export function buildSchema<T, U extends NoParamConstructor<T>>(cl: U) {
     /* istanbul ignore next */
     if (parentCtor.name === 'Typegoose') { // TODO: remove this if, if the Typegoose class gets removed [DEPRECATION]
       deprecate(() => undefined, 'The Typegoose Class is deprecated, please try to remove it')();
+      break;
     }
     // extend schema
     sch = _buildSchema(parentCtor, sch);

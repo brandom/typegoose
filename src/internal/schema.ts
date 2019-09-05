@@ -1,11 +1,23 @@
 import * as mongoose from 'mongoose';
 
+import { isNullOrUndefined } from 'util';
 import { IModelOptions } from '../typegoose';
 import { EmptyVoidFn, NoParamConstructor } from '../types';
 import { DecoratorKeys } from './constants';
-import { buildSchemas, hooks, plugins, schemas, virtuals } from './data';
+import { buildSchemas, decoratorCache, hooks, plugins, schemas, virtuals } from './data';
 import { NoValidClass } from './errors';
 import { getName } from './utils';
+
+/**
+ * Apply Options to an existing Schema
+ * @param sch
+ * @param opt
+ */
+function applyOptions(sch: mongoose.Schema, opt: mongoose.SchemaOptions) {
+  for (const [key, value] of Object.entries(opt)) {
+    sch.set(key as keyof mongoose.SchemaOptions, value);
+  }
+}
 
 /**
  * Private schema builder out of class props
@@ -27,6 +39,14 @@ export function _buildSchema<T, U extends NoParamConstructor<T>>(
 
   const name = getName(cl);
   if (buildSchemas.get(name)) {
+    // this below are leftovers of trying to get "_id: false" to work
+    // if (Object.keys(opt).length > 0) {
+    //   const fsch = buildSchemas.get(name).clone();
+    //   applyOptions(fsch, opt);
+
+    //   return fsch;
+    // }
+
     return buildSchemas.get(name);
   }
 
@@ -34,6 +54,15 @@ export function _buildSchema<T, U extends NoParamConstructor<T>>(
   const Schema = mongoose.Schema;
   const { schemaOptions: ropt }: IModelOptions = Reflect.getMetadata(DecoratorKeys.ModelOptions, cl) || {};
   const schemaOptions = Object.assign(ropt || {}, opt);
+
+  const { '1': { decorators } } = [...decoratorCache.entries()].find((v) => v[1].class === cl) ||
+    { 1: { decorators: null } };
+
+  if (!isNullOrUndefined(decorators)) {
+    for (const decorator of decorators.values()) {
+      decorator();
+    }
+  }
 
   if (!schemas.get(name)) {
     schemas.set(name, {});
@@ -44,6 +73,7 @@ export function _buildSchema<T, U extends NoParamConstructor<T>>(
   } else {
     sch = sch.clone();
     sch.add(schemas.get(name));
+    applyOptions(sch, opt);
   }
 
   sch.loadClass(cl);
