@@ -260,10 +260,10 @@ function baseProp(
       return;
     }
 
-    // this is meant to be just a temporary fix for https://github.com/Automattic/mongoose/issues/8137
-    const virtualSchema = new mongoose.Schema(
-      buildSchema(Type), { _id: typeof rawOptions._id === 'boolean' ? rawOptions._id : false }
-    );
+    const virtualSchema = buildSchema(Type);
+    // these below are leftovers of trying to get "_id: false" to work
+    // virtualSchema.set('_id', typeof rawOptions._id === 'boolean' ? rawOptions._id : false);
+    // virtualSchema.set('id', typeof rawOptions._id === 'boolean' ? rawOptions._id : false);
     schemas.get(name)[key] = {
       ...schemas.get(name)[key],
       ...options,
