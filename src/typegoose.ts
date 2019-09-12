@@ -160,9 +160,6 @@ export function buildSchema<T, U extends AnyParamConstructor<T>>(cl: U) {
  * ```
  */
 export function addModelToTypegoose<T, U extends AnyParamConstructor<T>>(model: mongoose.Model<any>, cl: U) {
-  if (!(model.prototype instanceof mongoose.Model)) {
-    throw new TypeError(`"${model}" is not a valid Model!`);
-  }
   if (typeof cl !== 'function') {
     throw new NoValidClass(cl);
   }
